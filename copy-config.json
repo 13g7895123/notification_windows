@@ -1,0 +1,7 @@
+{
+  "source_dir": "./dist",
+  "destination_dir": "/mnt/e/1_tools/3_scripts/bash/002_copy",
+  "files": [
+    "windows-notification.exe"
+  ]
+}

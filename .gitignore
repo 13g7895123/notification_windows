@@ -1,0 +1,36 @@
+# 編譯輸出
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 測試檔案
+*.test
+
+# Go 工作區
+go.work
+
+# 依賴套件
+vendor/
+
+# 設定檔（保留範例檔）
+config.json
+
+# 編譯輸出目錄
+dist/
+build/
+
+# IDE 設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 作業系統檔案
+.DS_Store
+Thumbs.db
+
+# Log 檔案
+*.log
