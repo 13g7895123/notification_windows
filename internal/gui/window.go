@@ -213,10 +213,13 @@ func (aw *AppWindow) testAPI() {
 
 // start begins monitoring
 func (aw *AppWindow) start() {
-	aw.mu.Lock()
-	defer aw.mu.Unlock()
+	// Add immediate debug log (before acquiring lock)
+	aw.addHistory("[INFO] Start button clicked")
 
+	aw.mu.Lock()
 	if aw.isRunning {
+		aw.mu.Unlock()
+		aw.addHistory("[INFO] Already running, ignoring")
 		return
 	}
 
@@ -227,7 +230,9 @@ func (aw *AppWindow) start() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	aw.cancelFunc = cancel
+	aw.mu.Unlock() // Release lock before calling addHistory
 
+	// Now safe to call addHistory (not holding lock)
 	aw.addHistory(fmt.Sprintf("[START] Monitoring started - Project: %s, Interval: %d seconds", aw.cfg.Project, aw.cfg.Interval))
 	if aw.cfg.Debug {
 		aw.addHistory("[START] Debug mode is ON - detailed API information will be displayed")
@@ -238,7 +243,7 @@ func (aw *AppWindow) start() {
 
 // stop stops monitoring
 func (aw *AppWindow) stop() {
-	aw.addHistory("[INFO] Stop function called")
+	aw.addHistory("[INFO] Stop button clicked")
 
 	aw.mu.Lock()
 	if !aw.isRunning {
@@ -247,10 +252,15 @@ func (aw *AppWindow) stop() {
 		return
 	}
 
-	// Cancel the context first
+	// Save cancel function and update state
 	cancelFunc := aw.cancelFunc
 	aw.isRunning = false
-	aw.mu.Unlock()
+
+	// Update UI while holding lock (for consistency with start())
+	aw.startBtn.Enable()
+	aw.stopBtn.Disable()
+	aw.statusLabel.SetText("Status: Stopped")
+	aw.mu.Unlock() // Release lock before calling addHistory
 
 	// Cancel outside of lock
 	if cancelFunc != nil {
@@ -258,10 +268,6 @@ func (aw *AppWindow) stop() {
 		cancelFunc()
 	}
 
-	// Update UI
-	aw.startBtn.Enable()
-	aw.stopBtn.Disable()
-	aw.statusLabel.SetText("Status: Stopped")
 	aw.addHistory("[STOP] Monitoring stopped successfully")
 }
 
