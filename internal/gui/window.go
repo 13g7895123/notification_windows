@@ -14,6 +14,7 @@ import (
 
 	"windows-notification/internal/api"
 	"windows-notification/internal/config"
+	"windows-notification/internal/logger"
 	"windows-notification/internal/notification"
 )
 
@@ -24,6 +25,7 @@ type AppWindow struct {
 	cfg          *config.Config
 	apiClient    *api.Client
 	notifier     *notification.Notifier
+	logger       *logger.Logger
 	isRunning    bool
 	cancelFunc   context.CancelFunc
 	mu           sync.Mutex
@@ -43,13 +45,6 @@ func NewAppWindow() *AppWindow {
 	myApp := app.New()
 	win := myApp.NewWindow("Windows Notification Monitor")
 
-	aw := &AppWindow{
-		app:      myApp,
-		window:   win,
-		history:  make([]string, 0),
-		notifier: notification.NewNotifier("Windows Notification Monitor"),
-	}
-
 	// 載入設定
 	cfg, err := config.Load("config.json")
 	if err != nil {
@@ -60,13 +55,32 @@ func NewAppWindow() *AppWindow {
 			Interval: 5,
 		}
 	}
-	aw.cfg = cfg
 
-	// Create API client with debug logger
-	debugLogger := func(msg string) {
-		aw.addHistory(msg)
+	// 創建 logger
+	log, err := logger.New(cfg.Debug)
+	if err != nil {
+		// 如果無法創建 logger，記錄到控制台
+		fmt.Printf("警告: 無法創建 logger: %v\n", err)
 	}
-	aw.apiClient = api.NewClient(cfg.Domain, cfg.Debug, debugLogger)
+
+	aw := &AppWindow{
+		app:      myApp,
+		window:   win,
+		history:  make([]string, 0),
+		notifier: notification.NewNotifier("Windows Notification Monitor", log),
+		logger:   log,
+		cfg:      cfg,
+	}
+
+	// 設定 logger 的 GUI 回調
+	if aw.logger != nil {
+		aw.logger.SetGUICallback(func(msg string) {
+			aw.addHistoryDirect(msg)
+		})
+	}
+
+	// Create API client with logger
+	aw.apiClient = api.NewClientWithLogger(cfg.Domain, aw.logger)
 
 	aw.buildUI()
 	return aw
@@ -89,24 +103,31 @@ func (aw *AppWindow) buildUI() {
 
 	aw.debugCheck = widget.NewCheck("Debug Mode", func(checked bool) {
 		aw.cfg.Debug = checked
-		// Update API client with new debug setting
-		debugLogger := func(msg string) {
-			aw.addHistory(msg)
+		
+		// 更新 logger 的 debug 模式
+		if aw.logger != nil {
+			aw.logger.SetDebugMode(checked)
 		}
-		aw.apiClient = api.NewClient(aw.cfg.Domain, aw.cfg.Debug, debugLogger)
+
+		// 更新 API client
+		aw.apiClient = api.NewClientWithLogger(aw.cfg.Domain, aw.logger)
 
 		// Immediate feedback
 		if checked {
-			aw.addHistory("[DEBUG] Debug mode ENABLED - API calls will show detailed information")
+			if aw.logger != nil {
+				aw.logger.Info("Debug 模式已開啟 - API 呼叫將顯示詳細資訊")
+			}
 		} else {
-			aw.addHistory("[INFO] Debug mode DISABLED")
+			if aw.logger != nil {
+				aw.logger.Info("Debug 模式已關閉")
+			}
 		}
 	})
 	aw.debugCheck.SetChecked(aw.cfg.Debug)
 
 	// Show initial debug status
-	if aw.cfg.Debug {
-		aw.addHistory("[DEBUG] Debug mode is ENABLED")
+	if aw.cfg.Debug && aw.logger != nil {
+		aw.logger.Debug("Debug 模式已啟用")
 	}
 
 	settingsForm := container.NewVBox(
@@ -182,6 +203,9 @@ func (aw *AppWindow) saveConfig() {
 	interval, err := strconv.Atoi(aw.intervalEntry.Text)
 	if err != nil {
 		interval = 5
+		if aw.logger != nil {
+			aw.logger.Warnf("無效的間隔時間，使用預設值: %d 秒", interval)
+		}
 	}
 
 	aw.cfg.Domain = aw.domainEntry.Text
@@ -190,22 +214,26 @@ func (aw *AppWindow) saveConfig() {
 	aw.cfg.Debug = aw.debugCheck.Checked
 
 	if err := config.Save("config.json", aw.cfg); err != nil {
-		aw.addHistory(fmt.Sprintf("[ERROR] Failed to save config: %v", err))
-	} else {
-		aw.addHistory("[SUCCESS] Configuration saved")
-		// Update API client with debug setting
-		debugLogger := func(msg string) {
-			aw.addHistory(msg)
+		if aw.logger != nil {
+			aw.logger.Errorf("儲存設定失敗: %v", err)
 		}
-		aw.apiClient = api.NewClient(aw.cfg.Domain, aw.cfg.Debug, debugLogger)
+	} else {
+		if aw.logger != nil {
+			aw.logger.Success("設定已儲存")
+			aw.logger.Infof("Domain: %s, Project: %s, Interval: %d 秒", aw.cfg.Domain, aw.cfg.Project, aw.cfg.Interval)
+		}
+		// Update API client
+		aw.apiClient = api.NewClientWithLogger(aw.cfg.Domain, aw.logger)
 	}
 }
 
 // testAPI tests API connection immediately
 func (aw *AppWindow) testAPI() {
-	aw.addHistory("[TEST] Testing API connection...")
-	aw.addHistory(fmt.Sprintf("[TEST] Debug Mode: %v", aw.cfg.Debug))
-	aw.addHistory(fmt.Sprintf("[TEST] Target: %s/api/notifications?status=0&project=%s", aw.cfg.Domain, aw.cfg.Project))
+	if aw.logger != nil {
+		aw.logger.Info("開始測試 API 連線...")
+		aw.logger.Infof("Debug 模式: %v", aw.cfg.Debug)
+		aw.logger.Infof("目標: %s/api/notifications?status=0&project=%s", aw.cfg.Domain, aw.cfg.Project)
+	}
 
 	// Immediately check notifications once
 	go aw.checkNotifications()
@@ -214,12 +242,16 @@ func (aw *AppWindow) testAPI() {
 // start begins monitoring
 func (aw *AppWindow) start() {
 	// Add immediate debug log (before acquiring lock)
-	aw.addHistory("[INFO] Start button clicked")
+	if aw.logger != nil {
+		aw.logger.Info("開始按鈕被點擊")
+	}
 
 	aw.mu.Lock()
 	if aw.isRunning {
 		aw.mu.Unlock()
-		aw.addHistory("[INFO] Already running, ignoring")
+		if aw.logger != nil {
+			aw.logger.Warn("監控已在執行中，忽略重複啟動")
+		}
 		return
 	}
 
@@ -230,12 +262,15 @@ func (aw *AppWindow) start() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	aw.cancelFunc = cancel
-	aw.mu.Unlock() // Release lock before calling addHistory
+	aw.mu.Unlock() // Release lock before logging
 
-	// Now safe to call addHistory (not holding lock)
-	aw.addHistory(fmt.Sprintf("[START] Monitoring started - Project: %s, Interval: %d seconds", aw.cfg.Project, aw.cfg.Interval))
-	if aw.cfg.Debug {
-		aw.addHistory("[START] Debug mode is ON - detailed API information will be displayed")
+	// Log start information
+	if aw.logger != nil {
+		aw.logger.Infof("監控已啟動 - 專案: %s, 間隔: %d 秒", aw.cfg.Project, aw.cfg.Interval)
+		aw.logger.Infof("API 端點: %s", aw.cfg.Domain)
+		if aw.cfg.Debug {
+			aw.logger.Debug("Debug 模式已開啟 - 將顯示詳細的 API 資訊")
+		}
 	}
 
 	go aw.monitorLoop(ctx)
@@ -243,12 +278,16 @@ func (aw *AppWindow) start() {
 
 // stop stops monitoring
 func (aw *AppWindow) stop() {
-	aw.addHistory("[INFO] Stop button clicked")
+	if aw.logger != nil {
+		aw.logger.Info("停止按鈕被點擊")
+	}
 
 	aw.mu.Lock()
 	if !aw.isRunning {
 		aw.mu.Unlock()
-		aw.addHistory("[INFO] Already stopped, ignoring")
+		if aw.logger != nil {
+			aw.logger.Warn("監控未在執行中，忽略停止操作")
+		}
 		return
 	}
 
@@ -260,30 +299,47 @@ func (aw *AppWindow) stop() {
 	aw.startBtn.Enable()
 	aw.stopBtn.Disable()
 	aw.statusLabel.SetText("Status: Stopped")
-	aw.mu.Unlock() // Release lock before calling addHistory
+	aw.mu.Unlock() // Release lock before logging
 
 	// Cancel outside of lock
 	if cancelFunc != nil {
-		aw.addHistory("[INFO] Cancelling monitoring loop...")
+		if aw.logger != nil {
+			aw.logger.Info("正在取消監控迴圈...")
+		}
 		cancelFunc()
 	}
 
-	aw.addHistory("[STOP] Monitoring stopped successfully")
+	if aw.logger != nil {
+		aw.logger.Success("監控已成功停止")
+	}
 }
 
 // monitorLoop 監控迴圈
 func (aw *AppWindow) monitorLoop(ctx context.Context) {
+	if aw.logger != nil {
+		aw.logger.Debug("監控迴圈已啟動")
+	}
+
 	ticker := time.NewTicker(time.Duration(aw.cfg.Interval) * time.Second)
 	defer ticker.Stop()
 
 	// 立即執行一次
+	if aw.logger != nil {
+		aw.logger.Debug("執行首次通知檢查...")
+	}
 	aw.checkNotifications()
 
 	for {
 		select {
 		case <-ctx.Done():
+			if aw.logger != nil {
+				aw.logger.Debug("監控迴圈收到取消信號，正在退出...")
+			}
 			return
 		case <-ticker.C:
+			if aw.logger != nil {
+				aw.logger.Debug("定時器觸發，執行通知檢查...")
+			}
 			aw.checkNotifications()
 		}
 	}
@@ -293,39 +349,56 @@ func (aw *AppWindow) monitorLoop(ctx context.Context) {
 func (aw *AppWindow) checkNotifications() {
 	notifications, err := aw.apiClient.GetUnnotifiedNotifications(aw.cfg.Project)
 	if err != nil {
-		aw.addHistory(fmt.Sprintf("[ERROR] API query failed: %v", err))
+		if aw.logger != nil {
+			aw.logger.Errorf("API 查詢失敗: %v", err)
+		}
 		return
 	}
 
 	if len(notifications) == 0 {
+		if aw.logger != nil {
+			aw.logger.Debug("沒有未通知的記錄")
+		}
 		return
 	}
 
-	aw.addHistory(fmt.Sprintf("[QUERY] Found %d unnotified notification(s)", len(notifications)))
+	if aw.logger != nil {
+		aw.logger.Infof("發現 %d 個未通知的記錄", len(notifications))
+	}
 
 	for _, notif := range notifications {
 		// Show system notification
 		if err := aw.notifier.Show(notif.Title, notif.Message); err != nil {
-			aw.addHistory(fmt.Sprintf("[ERROR] Failed to show notification (ID: %s): %v", notif.ID, err))
+			if aw.logger != nil {
+				aw.logger.Errorf("顯示通知失敗 (ID: %s): %v", notif.ID, err)
+			}
 			continue
 		}
 
 		// Update status to notified
 		if err := aw.apiClient.UpdateNotificationStatus(notif.ID); err != nil {
-			aw.addHistory(fmt.Sprintf("[ERROR] Failed to update status (ID: %s): %v", notif.ID, err))
+			if aw.logger != nil {
+				aw.logger.Errorf("更新狀態失敗 (ID: %s): %v", notif.ID, err)
+			}
 		} else {
-			aw.addHistory(fmt.Sprintf("[NOTIFIED] %s - %s", notif.Title, notif.Message))
+			if aw.logger != nil {
+				aw.logger.Successf("已通知: %s - %s", notif.Title, notif.Message)
+			}
 		}
 	}
 }
 
-// addHistory 新增歷史記錄
+// addHistory 新增歷史記錄（已棄用，由 logger 回調）
 func (aw *AppWindow) addHistory(msg string) {
 	timestamp := time.Now().Format("15:04:05")
 	fullMsg := fmt.Sprintf("[%s] %s", timestamp, msg)
+	aw.addHistoryDirect(fullMsg)
+}
 
+// addHistoryDirect 直接新增到歷史記錄（由 logger 回調使用）
+func (aw *AppWindow) addHistoryDirect(msg string) {
 	aw.mu.Lock()
-	aw.history = append([]string{fullMsg}, aw.history...)
+	aw.history = append([]string{msg}, aw.history...)
 	if len(aw.history) > 100 {
 		aw.history = aw.history[:100]
 	}
@@ -336,5 +409,15 @@ func (aw *AppWindow) addHistory(msg string) {
 
 // Run 執行應用程式
 func (aw *AppWindow) Run() {
+	if aw.logger != nil {
+		aw.logger.Info("應用程式視窗已開啟")
+	}
+	
 	aw.window.ShowAndRun()
+	
+	// 清理資源
+	if aw.logger != nil {
+		aw.logger.Info("應用程式即將關閉")
+		aw.logger.Close()
+	}
 }

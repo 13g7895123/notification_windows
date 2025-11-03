@@ -34,3 +34,4 @@ Thumbs.db
 
 # Log 檔案
 *.log
+logs/

@@ -1,7 +1,8 @@
 {
   "source_dir": "./dist",
-  "destination_dir": "/mnt/e/1_tools/3_scripts/bash/002_copy",
+  "destination_dir": "/mnt/c/Jarvis/7_temp/251103",
   "files": [
-    "windows-notification.exe"
+    "windows-notification.exe",
+    "config.json.example"
   ]
 }
