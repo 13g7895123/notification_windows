@@ -156,8 +156,7 @@ func (aw *AppWindow) buildUI() {
 	})
 
 	aw.stopBtn = widget.NewButton("Stop Monitoring", func() {
-		aw.addHistory("[INFO] Stop button clicked")
-		go aw.stop()
+		aw.stop()
 	})
 	aw.stopBtn.Disable()
 
@@ -256,13 +255,15 @@ func (aw *AppWindow) start() {
 	}
 
 	aw.isRunning = true
-	aw.startBtn.Disable()
-	aw.stopBtn.Enable()
-	aw.statusLabel.SetText("Status: Monitoring...")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	aw.cancelFunc = cancel
-	aw.mu.Unlock() // Release lock before logging
+	aw.mu.Unlock() // Release lock before UI updates
+
+	// Update UI on main thread
+	aw.startBtn.Disable()
+	aw.stopBtn.Enable()
+	aw.statusLabel.SetText("Status: Monitoring...")
 
 	// Log start information
 	if aw.logger != nil {
@@ -294,12 +295,12 @@ func (aw *AppWindow) stop() {
 	// Save cancel function and update state
 	cancelFunc := aw.cancelFunc
 	aw.isRunning = false
+	aw.mu.Unlock() // Release lock before UI updates
 
-	// Update UI while holding lock (for consistency with start())
+	// Update UI on main thread
 	aw.startBtn.Enable()
 	aw.stopBtn.Disable()
 	aw.statusLabel.SetText("Status: Stopped")
-	aw.mu.Unlock() // Release lock before logging
 
 	// Cancel outside of lock
 	if cancelFunc != nil {
