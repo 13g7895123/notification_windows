@@ -5,6 +5,8 @@ const electronAPI = {
     // 設定管理
     getConfig: () => ipcRenderer.invoke('get-config'),
     saveConfig: (config: unknown) => ipcRenderer.invoke('save-config', config),
+    minimize: () => ipcRenderer.invoke('window-minimize'),
+    close: () => ipcRenderer.invoke('window-close'),
 
     // 監控控制
     startMonitoring: () => ipcRenderer.invoke('start-monitoring'),

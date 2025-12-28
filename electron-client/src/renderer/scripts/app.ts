@@ -4,6 +4,8 @@ declare global {
         electronAPI: {
             getConfig: () => Promise<AppConfig>;
             saveConfig: (config: AppConfig) => Promise<boolean>;
+            minimize: () => Promise<void>;
+            close: () => Promise<void>;
             startMonitoring: () => Promise<boolean>;
             stopMonitoring: () => Promise<boolean>;
             getMonitoringStatus: () => Promise<boolean>;
@@ -144,6 +146,15 @@ function setupEventListeners(): void {
     elements.btnStop.addEventListener('click', async () => {
         await window.electronAPI.stopMonitoring();
     });
+
+    // 視窗控制
+    document.getElementById('win-min')?.addEventListener('click', () => {
+        window.electronAPI.minimize();
+    });
+
+    document.getElementById('win-close')?.addEventListener('click', () => {
+        window.electronAPI.close();
+    });
 }
 
 function setupIPCListeners(): void {
@@ -198,20 +209,16 @@ function addHistoryItem(title: string, message: string, type: 'info' | 'success'
     const now = new Date();
     const timeStr = now.toLocaleTimeString('zh-TW');
 
-    // 根據類型設定邊框顏色
-    const colors: Record<string, string> = {
-        info: '#6366f1',
-        success: '#22c55e',
-        error: '#ef4444',
-        notification: '#f59e0b',
-    };
-    item.style.borderLeftColor = colors[type] || colors.info;
+    // 根據類型設定 class
+    item.classList.add(type);
 
     item.innerHTML = `
-    <div class="title">${escapeHtml(title)}</div>
-    ${message ? `<div class="message">${escapeHtml(message)}</div>` : ''}
-    <div class="time">${timeStr}</div>
-  `;
+    <div class="history-header">
+       <span class="history-title">${escapeHtml(title)}</span>
+       <span class="history-time">${timeStr}</span>
+    </div>
+    ${message ? `<div class="history-message">${escapeHtml(message)}</div>` : ''}
+    `;
 
     // 插入到開頭
     elements.historyList.insertBefore(item, elements.historyList.firstChild);

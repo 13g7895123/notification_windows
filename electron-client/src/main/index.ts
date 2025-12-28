@@ -16,10 +16,13 @@ const notificationManager = new NotificationManager();
 
 function createWindow(): void {
     mainWindow = new BrowserWindow({
-        width: 600,
-        height: 500,
-        minWidth: 500,
-        minHeight: 400,
+        width: 1000,
+        height: 700,
+        minWidth: 800,
+        minHeight: 600,
+        frame: false, // 自定義外框
+        transparent: true, // 支援圓角透明背景
+        backgroundColor: '#00000000',
         webPreferences: {
             preload: path.join(__dirname, '../preload/preload.js'),
             contextIsolation: true,
@@ -176,6 +179,10 @@ ipcMain.handle('stop-monitoring', () => {
 ipcMain.handle('get-monitoring-status', () => {
     return isMonitoring;
 });
+
+ipcMain.handle('window-minimize', () => mainWindow?.minimize());
+
+ipcMain.handle('window-close', () => mainWindow?.close());
 
 ipcMain.handle('test-api', async () => {
     const config = configManager.getConfig();

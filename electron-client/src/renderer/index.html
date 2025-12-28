@@ -6,79 +6,149 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
-  <title>通知監控程式</title>
+  <title>Notification Hub</title>
   <link rel="stylesheet" href="./styles/main.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 </head>
 
 <body>
+  <div class="app-background"></div>
   <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <h1>🔔 通知監控程式</h1>
-      <div class="status-badge" id="status-badge">
-        <span class="status-dot"></span>
-        <span class="status-text">已停止</span>
+
+    <!-- Top Bar: Status & Title -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+        <h1>Notify<span class="highlight">Hub</span></h1>
+      </div>
+
+      <div class="status-indicator" id="status-badge">
+        <div class="status-ring"></div>
+        <div class="status-dot"></div>
+        <span class="status-text">OFFLINE</span>
+      </div>
+      <div class="window-controls">
+        <button id="win-min" class="win-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <button id="win-close" class="win-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </header>
 
-    <!-- Settings Section -->
-    <section class="settings-section">
-      <h2>⚙️ 設定</h2>
-
-      <div class="form-group">
-        <label for="domain">API 網域</label>
-        <input type="text" id="domain" placeholder="http://localhost:9204">
-      </div>
-
-      <div class="form-group">
-        <label for="project">專案名稱（留空監控全部）</label>
-        <input type="text" id="project" placeholder="free_youtube">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="interval">查詢間隔（秒）</label>
-          <input type="number" id="interval" min="1" max="3600" value="5">
+    <main class="dashboard-grid">
+      <!-- Left Panel: Configuration -->
+      <section class="panel config-panel">
+        <div class="panel-header">
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="icon">
+              <path
+                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+            </svg> Configuration</h2>
         </div>
 
-        <div class="form-group checkbox-group">
-          <label>
-            <input type="checkbox" id="debug">
-            Debug 模式
-          </label>
+        <div class="input-group">
+          <label for="domain">API DOMAIN</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🌐</span>
+            <input type="text" id="domain" placeholder="https://api.example.com" spellcheck="false">
+          </div>
         </div>
-      </div>
 
-      <div class="button-group">
-        <button id="btn-save" class="btn btn-secondary">💾 儲存設定</button>
-        <button id="btn-test" class="btn btn-secondary">🔗 測試 API</button>
-        <button id="btn-test-notify" class="btn btn-secondary">🔔 測試通知</button>
-      </div>
-    </section>
+        <div class="input-group">
+          <label for="project">PROJECT ID</label>
+          <div class="input-wrapper">
+            <span class="input-icon">📂</span>
+            <input type="text" id="project" placeholder="project_name" spellcheck="false">
+          </div>
+        </div>
 
-    <!-- Control Section -->
-    <section class="control-section">
-      <h2>🎮 控制</h2>
-      <div class="button-group">
-        <button id="btn-start" class="btn btn-primary">▶️ 啟動監控</button>
-        <button id="btn-stop" class="btn btn-danger" disabled>⏹️ 停止監控</button>
-      </div>
-    </section>
+        <div class="row-group">
+          <div class="input-group">
+            <label for="interval">INTERVAL (SEC)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">⏱️</span>
+              <input type="number" id="interval" min="1" max="3600" value="5">
+            </div>
+          </div>
 
-    <!-- History Section -->
-    <section class="history-section">
-      <h2>📜 通知歷史</h2>
-      <div class="history-list" id="history-list">
-        <div class="history-empty">尚無通知記錄</div>
-      </div>
-    </section>
+          <div class="toggle-group">
+            <label class="toggle-switch">
+              <input type="checkbox" id="debug">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">DEBUG MODE</span>
+          </div>
+        </div>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <span>Electron 版本 v1.0.0</span>
-    </footer>
+        <div class="action-buttons">
+          <button id="btn-save" class="btn btn-secondary">
+            <span>SAVE CONFIG</span>
+          </button>
+          <button id="btn-test" class="btn btn-ghost">
+            <span>TEST API</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Panel: Control & Logistics -->
+      <section class="right-column">
+        <!-- Control Card -->
+        <div class="panel control-panel">
+          <div class="monitoring-controls">
+            <button id="btn-start" class="btn btn-primary btn-large">
+              <div class="btn-content">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>START MONITORING</span>
+              </div>
+            </button>
+            <button id="btn-stop" class="btn btn-danger btn-large" disabled>
+              <div class="btn-content">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                <span>STOP</span>
+              </div>
+            </button>
+          </div>
+          <button id="btn-test-notify" class="btn btn-outline btn-block">
+            <span>🔔 SEND TEST NOTIFICATION</span>
+          </button>
+        </div>
+
+        <!-- History Log -->
+        <div class="panel history-panel">
+          <div class="panel-header">
+            <h2>Activity Log</h2>
+            <div class="log-indicator">LIVE</div>
+          </div>
+          <div class="history-list custom-scrollbar" id="history-list">
+            <div class="history-empty">
+              <span class="empty-icon">📝</span>
+              <span>No activity recorded</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
-
   <script type="module" src="./scripts/app.ts"></script>
 </body>
 
