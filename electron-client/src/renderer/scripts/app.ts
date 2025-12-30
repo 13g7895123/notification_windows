@@ -22,7 +22,6 @@ declare global {
 interface AppConfig {
     domain: string;
     apiKey: string;
-    project: string;
     interval: number;
     debug: boolean;
 }
@@ -38,7 +37,7 @@ interface NotificationItem {
 // DOM 元素
 const elements = {
     domain: document.getElementById('domain') as HTMLInputElement,
-    project: document.getElementById('project') as HTMLInputElement,
+    apiKey: document.getElementById('apiKey') as HTMLInputElement,
     interval: document.getElementById('interval') as HTMLInputElement,
     debug: document.getElementById('debug') as HTMLInputElement,
     btnSave: document.getElementById('btn-save') as HTMLButtonElement,
@@ -46,6 +45,7 @@ const elements = {
     btnStart: document.getElementById('btn-start') as HTMLButtonElement,
     btnStop: document.getElementById('btn-stop') as HTMLButtonElement,
     btnTestNotify: document.getElementById('btn-test-notify') as HTMLButtonElement,
+    btnCopyGuide: document.getElementById('btn-copy-guide') as HTMLButtonElement,
     statusBadge: document.getElementById('status-badge') as HTMLDivElement,
     historyList: document.getElementById('history-list') as HTMLDivElement,
 };
@@ -59,7 +59,6 @@ async function init(): Promise<void> {
     const config = await window.electronAPI.getConfig();
     elements.domain.value = config.domain;
     elements.apiKey.value = config.apiKey;
-    elements.project.value = config.project;
     elements.interval.value = String(config.interval);
     elements.debug.checked = config.debug;
 
@@ -78,7 +77,6 @@ function setupEventListeners(): void {
         const config: AppConfig = {
             domain: elements.domain.value,
             apiKey: elements.apiKey.value,
-            project: elements.project.value,
             interval: parseInt(elements.interval.value) || 5,
             debug: elements.debug.checked,
         };
@@ -97,7 +95,6 @@ function setupEventListeners(): void {
             const config: AppConfig = {
                 domain: elements.domain.value,
                 apiKey: elements.apiKey.value,
-                project: elements.project.value,
                 interval: parseInt(elements.interval.value) || 5,
                 debug: elements.debug.checked,
             };
@@ -138,7 +135,6 @@ function setupEventListeners(): void {
         const config: AppConfig = {
             domain: elements.domain.value,
             apiKey: elements.apiKey.value,
-            project: elements.project.value,
             interval: parseInt(elements.interval.value) || 5,
             debug: elements.debug.checked,
         };
@@ -223,7 +219,7 @@ function setupIPCListeners(): void {
     window.electronAPI.onMonitoringStatus((status: boolean) => {
         updateMonitoringUI(status);
         if (status) {
-            addHistoryItem('監控已啟動', `專案: ${elements.project.value || '全部'}, 間隔: ${elements.interval.value} 秒`, 'info');
+            addHistoryItem('監控已啟動', `間隔: ${elements.interval.value} 秒`, 'info');
         } else {
             addHistoryItem('監控已停止', '', 'info');
         }
@@ -380,7 +376,6 @@ npm install
 2. 在 Configuration 面板中填入：
    - **API DOMAIN**: \`https://notify.try-8verything.com\`
    - **API KEY**: 貼上您的 API Key（點擊眼睛圖示可顯示/隱藏）
-   - **PROJECT ID**: 您的專案名稱（選填）
    - **INTERVAL**: 輪詢間隔秒數（建議 5-30 秒）
 
 3. 點擊 **SAVE CONFIG** 儲存設定
@@ -509,12 +504,6 @@ A: 不會。GitHub Actions 的環境變數（如 WINDOWS_NOTIFY_API_KEY）只在
 - **5-10 秒**: 即時性需求高
 - **10-30 秒**: 一般使用
 - **60 秒以上**: 降低伺服器負載
-
-### 專案篩選
-
-在 **PROJECT ID** 欄位可以：
-- 填入特定專案名稱：只接收該專案的通知
-- 留空：接收所有專案的通知
 
 ### 開機自動啟動
 

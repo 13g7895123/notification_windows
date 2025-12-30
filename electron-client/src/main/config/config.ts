@@ -3,7 +3,6 @@ import Store from 'electron-store';
 export interface AppConfig {
     domain: string;
     apiKey: string;
-    project: string;
     interval: number;
     debug: boolean;
 }
@@ -11,7 +10,6 @@ export interface AppConfig {
 const defaultConfig: AppConfig = {
     domain: 'https://notify.try-8verything.com',
     apiKey: '',
-    project: '',
     interval: 5,
     debug: false,
 };
@@ -29,10 +27,6 @@ export class ConfigManager {
                     default: 'https://notify.try-8verything.com',
                 },
                 apiKey: {
-                    type: 'string',
-                    default: '',
-                },
-                project: {
                     type: 'string',
                     default: '',
                 },
@@ -54,7 +48,6 @@ export class ConfigManager {
         return {
             domain: this.store.get('domain'),
             apiKey: this.store.get('apiKey'),
-            project: this.store.get('project'),
             interval: this.store.get('interval'),
             debug: this.store.get('debug'),
         };
@@ -66,9 +59,6 @@ export class ConfigManager {
         }
         if (config.apiKey !== undefined) {
             this.store.set('apiKey', config.apiKey);
-        }
-        if (config.project !== undefined) {
-            this.store.set('project', config.project);
         }
         if (config.interval !== undefined) {
             this.store.set('interval', config.interval);

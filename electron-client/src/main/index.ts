@@ -93,7 +93,7 @@ async function checkNotifications(): Promise<void> {
     const apiClient = new ApiClient(config.domain, config.apiKey, logger);
 
     try {
-        const notifications = await apiClient.getUnnotifiedNotifications(config.project);
+        const notifications = await apiClient.getUnnotifiedNotifications();
 
         for (const notification of notifications) {
             // 顯示系統通知
@@ -129,7 +129,7 @@ function startMonitoring(): void {
     const config = configManager.getConfig();
     isMonitoring = true;
 
-    logger.info(`監控已啟動 - 專案: ${config.project || '全部'}, 間隔: ${config.interval} 秒`);
+    logger.info(`監控已啟動 - 間隔: ${config.interval} 秒`);
 
     // 立即檢查一次
     checkNotifications();

@@ -1,7 +1,6 @@
 {
   "domain": "https://notify.try-8verything.com",
   "apiKey": "YOUR_API_KEY",
-  "project": "free_youtube",
   "interval": 5,
   "debug": false
 }

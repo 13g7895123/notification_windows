@@ -36,7 +36,7 @@ export class ApiClient {
         }
     }
 
-    async getUnnotifiedNotifications(project: string = ''): Promise<NotificationItem[]> {
+    async getUnnotifiedNotifications(): Promise<NotificationItem[]> {
         const url = `${this.baseURL}/api/notifications/windows/pending`;
 
         const startTime = Date.now();
