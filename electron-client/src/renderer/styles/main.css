@@ -494,10 +494,19 @@ input:checked+.slider:before {
   margin-bottom: 8px;
   border-left: 2px solid transparent;
   animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease;
 }
 
 .history-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.history-item.has-details .history-header {
+  user-select: none;
+}
+
+.history-item.expanded {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .history-item.info {
@@ -525,6 +534,15 @@ input:checked+.slider:before {
 .history-title {
   font-weight: 500;
   font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expand-icon {
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
 }
 
 .history-time {
@@ -537,6 +555,95 @@ input:checked+.slider:before {
   font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+/* 錯誤詳情樣式 */
+.history-details {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+.detail-row {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-row strong {
+  color: var(--primary);
+  display: inline-block;
+  min-width: 100px;
+}
+
+.detail-row code {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--warning);
+  word-break: break-all;
+}
+
+.detail-row pre {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  border-radius: 4px;
+  margin: 4px 0 0 0;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: #e0e0e0;
+}
+
+.status-code {
+  color: var(--danger);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.json-details {
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.json-details summary {
+  color: var(--primary);
+  font-weight: 500;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  user-select: none;
+}
+
+.json-details summary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.json-details pre {
+  margin-top: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .history-empty {

@@ -119,7 +119,12 @@ async function checkNotifications(): Promise<void> {
         }
     } catch (error) {
         logger.error(`檢查通知失敗: ${error}`);
-        mainWindow?.webContents.send('error', String(error));
+        // 傳送詳細錯誤資訊到 renderer
+        const errorDetails = (error as any)?.details || null;
+        mainWindow?.webContents.send('api-error', {
+            message: String(error),
+            details: errorDetails,
+        });
     }
 }
 

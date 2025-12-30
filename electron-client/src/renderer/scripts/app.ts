@@ -14,6 +14,7 @@ declare global {
             onNotificationReceived: (callback: (notification: NotificationItem) => void) => void;
             onMonitoringStatus: (callback: (status: boolean) => void) => void;
             onError: (callback: (error: string) => void) => void;
+            onApiError: (callback: (error: { message: string; details: any }) => void) => void;
             removeAllListeners: () => void;
         };
     }
@@ -232,7 +233,12 @@ function setupIPCListeners(): void {
 
     // 錯誤
     window.electronAPI.onError((error: string) => {
-        addHistoryItem('錯誤', error, 'error');
+        addHistoryItem('錯誤', error, 'error', null);
+    });
+
+    // API 錯誤（包含詳細資訊）
+    window.electronAPI.onApiError((error: { message: string; details: any }) => {
+        addHistoryItem('API 錯誤', error.message, 'error', error.details);
     });
 }
 
@@ -252,7 +258,7 @@ function updateMonitoringUI(isMonitoring: boolean): void {
     }
 }
 
-function addHistoryItem(title: string, message: string, type: 'info' | 'success' | 'error' | 'notification'): void {
+function addHistoryItem(title: string, message: string, type: 'info' | 'success' | 'error' | 'notification', details?: any): void {
     // 移除空狀態提示
     const emptyEl = elements.historyList.querySelector('.history-empty');
     if (emptyEl) {
@@ -268,14 +274,56 @@ function addHistoryItem(title: string, message: string, type: 'info' | 'success'
 
     // 根據類型設定 class
     item.classList.add(type);
+    if (details) {
+        item.classList.add('has-details');
+    }
+
+    let detailsHtml = '';
+    if (details) {
+        const detailsJson = JSON.stringify(details, null, 2);
+        detailsHtml = `
+        <div class="history-details" style="display: none;">
+            <div class="detail-row"><strong>錯誤類型:</strong> ${escapeHtml(details.type || 'unknown')}</div>
+            <div class="detail-row"><strong>請求方法:</strong> ${escapeHtml(details.method || 'N/A')}</div>
+            <div class="detail-row"><strong>請求 URL:</strong> <code>${escapeHtml(details.url || 'N/A')}</code></div>
+            ${details.requestBody ? `<div class="detail-row"><strong>請求 Body:</strong> <pre>${escapeHtml(JSON.stringify(details.requestBody, null, 2))}</pre></div>` : ''}
+            ${details.responseStatus ? `<div class="detail-row"><strong>響應狀態:</strong> <span class="status-code">HTTP ${details.responseStatus} ${escapeHtml(details.responseStatusText || '')}</span></div>` : ''}
+            ${details.responseBody ? `<div class="detail-row"><strong>響應內容:</strong> <pre>${escapeHtml(details.responseBody)}</pre></div>` : ''}
+            ${details.errorMessage ? `<div class="detail-row"><strong>錯誤訊息:</strong> ${escapeHtml(details.errorMessage)}</div>` : ''}
+            <div class="detail-row"><strong>耗時:</strong> ${details.duration || 0}ms</div>
+            <div class="detail-row"><strong>時間戳:</strong> ${new Date(details.timestamp).toLocaleString('zh-TW')}</div>
+            <details class="json-details">
+                <summary>完整 JSON</summary>
+                <pre>${escapeHtml(detailsJson)}</pre>
+            </details>
+        </div>
+        `;
+    }
 
     item.innerHTML = `
-    <div class="history-header">
-       <span class="history-title">${escapeHtml(title)}</span>
+    <div class="history-header" ${details ? 'style="cursor: pointer;"' : ''}>
+       <span class="history-title">${escapeHtml(title)}${details ? ' <span class="expand-icon">▼</span>' : ''}</span>
        <span class="history-time">${timeStr}</span>
     </div>
     ${message ? `<div class="history-message">${escapeHtml(message)}</div>` : ''}
+    ${detailsHtml}
     `;
+
+    // 如果有詳細資訊，添加點擊事件
+    if (details) {
+        const header = item.querySelector('.history-header') as HTMLElement;
+        const detailsEl = item.querySelector('.history-details') as HTMLElement;
+        const expandIcon = item.querySelector('.expand-icon') as HTMLElement;
+        
+        header.addEventListener('click', () => {
+            const isExpanded = detailsEl.style.display !== 'none';
+            detailsEl.style.display = isExpanded ? 'none' : 'block';
+            item.classList.toggle('expanded', !isExpanded);
+            if (expandIcon) {
+                expandIcon.textContent = isExpanded ? '▼' : '▲';
+            }
+        });
+    }
 
     // 插入到開頭
     elements.historyList.insertBefore(item, elements.historyList.firstChild);

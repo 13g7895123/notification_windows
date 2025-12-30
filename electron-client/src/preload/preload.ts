@@ -27,12 +27,16 @@ const electronAPI = {
     onError: (callback: (error: string) => void) => {
         ipcRenderer.on('error', (_event, error) => callback(error));
     },
+    onApiError: (callback: (error: { message: string; details: any }) => void) => {
+        ipcRenderer.on('api-error', (_event, error) => callback(error));
+    },
 
     // 移除事件監聽
     removeAllListeners: () => {
         ipcRenderer.removeAllListeners('notification-received');
         ipcRenderer.removeAllListeners('monitoring-status');
         ipcRenderer.removeAllListeners('error');
+        ipcRenderer.removeAllListeners('api-error');
     },
 };
 
