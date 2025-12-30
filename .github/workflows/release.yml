@@ -214,3 +214,23 @@ jobs:
           asset_path: electron-client/release/NotificationClient-${{ needs.create-release.outputs.version }}-linux-amd64.deb
           asset_name: NotificationClient-${{ needs.create-release.outputs.version }}-linux-amd64.deb
           asset_content_type: application/octet-stream
+
+  # 發送發布成功通知
+  notify-release:
+    needs: [create-release, build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: 發送 CI/CD 通知
+        run: |
+          curl -X POST https://notify.try-8verything.com/api/notifications/windows \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.NOTIFY_API_KEY }}" \
+            -d '{
+              "title": "🚀 Release Success",
+              "message": "通知監控程式 v${{ needs.create-release.outputs.version }} 已成功發布至所有平台 (Windows, macOS, Linux)",
+              "repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit_sha": "${{ github.sha }}",
+              "action_url": "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}"
+            }'
