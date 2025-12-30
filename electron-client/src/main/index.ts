@@ -90,7 +90,7 @@ function createTray(): void {
 
 async function checkNotifications(): Promise<void> {
     const config = configManager.getConfig();
-    const apiClient = new ApiClient(config.domain, logger);
+    const apiClient = new ApiClient(config.domain, config.apiKey, logger);
 
     try {
         const notifications = await apiClient.getUnnotifiedNotifications(config.project);
@@ -105,8 +105,8 @@ async function checkNotifications(): Promise<void> {
                 duration: 5000
             });
 
-            // 更新狀態為已通知
-            await apiClient.updateNotificationStatus(notification.id);
+            // 更新狀態為已送達
+            await apiClient.updateNotificationStatus(notification.id, 'delivered');
 
             logger.info(`已通知: ${notification.title} - ${notification.message}`);
 
@@ -186,7 +186,7 @@ ipcMain.handle('window-close', () => mainWindow?.close());
 
 ipcMain.handle('test-api', async () => {
     const config = configManager.getConfig();
-    const apiClient = new ApiClient(config.domain, logger);
+    const apiClient = new ApiClient(config.domain, config.apiKey, logger);
 
     try {
         await apiClient.testConnection();

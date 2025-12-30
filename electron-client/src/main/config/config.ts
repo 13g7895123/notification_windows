@@ -2,13 +2,15 @@ import Store from 'electron-store';
 
 export interface AppConfig {
     domain: string;
+    apiKey: string;
     project: string;
     interval: number;
     debug: boolean;
 }
 
 const defaultConfig: AppConfig = {
-    domain: 'http://localhost:9204',
+    domain: 'https://notify.try-8verything.com',
+    apiKey: '',
     project: '',
     interval: 5,
     debug: false,
@@ -24,7 +26,11 @@ export class ConfigManager {
             schema: {
                 domain: {
                     type: 'string',
-                    default: 'http://localhost:9204',
+                    default: 'https://notify.try-8verything.com',
+                },
+                apiKey: {
+                    type: 'string',
+                    default: '',
                 },
                 project: {
                     type: 'string',
@@ -47,6 +53,7 @@ export class ConfigManager {
     getConfig(): AppConfig {
         return {
             domain: this.store.get('domain'),
+            apiKey: this.store.get('apiKey'),
             project: this.store.get('project'),
             interval: this.store.get('interval'),
             debug: this.store.get('debug'),
@@ -56,6 +63,9 @@ export class ConfigManager {
     saveConfig(config: Partial<AppConfig>): void {
         if (config.domain !== undefined) {
             this.store.set('domain', config.domain);
+        }
+        if (config.apiKey !== undefined) {
+            this.store.set('apiKey', config.apiKey);
         }
         if (config.project !== undefined) {
             this.store.set('project', config.project);
