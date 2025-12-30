@@ -11,6 +11,7 @@ declare global {
             getMonitoringStatus: () => Promise<boolean>;
             testApi: () => Promise<{ success: boolean; message: string }>;
             testNotification: () => Promise<boolean>;
+            openLogsFolder: () => Promise<{ success: boolean; path?: string; error?: string }>;
             onNotificationReceived: (callback: (notification: NotificationItem) => void) => void;
             onMonitoringStatus: (callback: (status: boolean) => void) => void;
             onError: (callback: (error: string) => void) => void;
@@ -46,6 +47,7 @@ const elements = {
     btnStart: document.getElementById('btn-start') as HTMLButtonElement,
     btnStop: document.getElementById('btn-stop') as HTMLButtonElement,
     btnTestNotify: document.getElementById('btn-test-notify') as HTMLButtonElement,
+    btnOpenLogs: document.getElementById('btn-open-logs') as HTMLButtonElement,
     btnCopyGuide: document.getElementById('btn-copy-guide') as HTMLButtonElement,
     statusBadge: document.getElementById('status-badge') as HTMLDivElement,
     historyList: document.getElementById('history-list') as HTMLDivElement,
@@ -147,6 +149,20 @@ function setupEventListeners(): void {
     // 停止監控
     elements.btnStop.addEventListener('click', async () => {
         await window.electronAPI.stopMonitoring();
+    });
+
+    // 打開 logs 資料夾
+    elements.btnOpenLogs?.addEventListener('click', async () => {
+        try {
+            const result = await window.electronAPI.openLogsFolder();
+            if (result.success) {
+                addHistoryItem('已打開 Logs 資料夾', result.path || '', 'success');
+            } else {
+                addHistoryItem('打開 Logs 失敗', result.error || '', 'error');
+            }
+        } catch (error) {
+            addHistoryItem('打開 Logs 失敗', String(error), 'error');
+        }
     });
 
     // 視窗控制

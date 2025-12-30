@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Notification, Menu, Tray, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, Menu, Tray, nativeImage, shell } from 'electron';
 import * as path from 'path';
 import { ConfigManager } from './config/config';
 import { ApiClient } from './api/client';
@@ -94,6 +94,12 @@ async function checkNotifications(): Promise<void> {
 
     try {
         const notifications = await apiClient.getUnnotifiedNotifications();
+
+        // 確保 notifications 是陣列
+        if (!Array.isArray(notifications)) {
+            logger.error(`API 返回的不是陣列: ${typeof notifications}`);
+            throw new Error('API 返回格式錯誤：預期為陣列');
+        }
 
         for (const notification of notifications) {
             // 顯示系統通知
@@ -209,6 +215,18 @@ ipcMain.handle('test-notification', () => {
         duration: 5000
     });
     return true;
+});
+
+ipcMain.handle('open-logs-folder', async () => {
+    const logsPath = path.join(__dirname, '../../logs');
+    try {
+        await shell.openPath(logsPath);
+        logger.info(`已打開 logs 資料夾: ${logsPath}`);
+        return { success: true, path: logsPath };
+    } catch (error) {
+        logger.error(`打開 logs 資料夾失敗: ${error}`);
+        return { success: false, error: String(error) };
+    }
 });
 
 // 應用程式生命週期

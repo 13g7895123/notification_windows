@@ -16,6 +16,7 @@ const electronAPI = {
     // API 測試
     testApi: () => ipcRenderer.invoke('test-api'),
     testNotification: () => ipcRenderer.invoke('test-notification'),
+    openLogsFolder: () => ipcRenderer.invoke('open-logs-folder'),
 
     // 事件監聽
     onNotificationReceived: (callback: (notification: unknown) => void) => {

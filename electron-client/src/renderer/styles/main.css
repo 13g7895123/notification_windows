@@ -469,6 +469,34 @@ input:checked+.slider:before {
   animation: pulse 2s infinite;
 }
 
+/* Icon Button */
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
+}
+
+.btn-icon svg {
+  display: block;
+}
+
 @keyframes pulse {
 
   0%,
@@ -566,6 +594,9 @@ input:checked+.slider:before {
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.75rem;
   animation: slideDown 0.2s ease-out;
+  max-width: 100%;
+  overflow-x: auto;
+  word-wrap: break-word;
 }
 
 .detail-row {
@@ -591,6 +622,9 @@ input:checked+.slider:before {
   font-size: 0.7rem;
   color: var(--warning);
   word-break: break-all;
+  max-width: 100%;
+  display: inline-block;
+  overflow-wrap: break-word;
 }
 
 .detail-row pre {
@@ -603,6 +637,9 @@ input:checked+.slider:before {
   font-size: 0.7rem;
   line-height: 1.4;
   color: #e0e0e0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .status-code {
@@ -632,6 +669,8 @@ input:checked+.slider:before {
 .json-content {
   position: relative;
   margin-top: 8px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .copy-json-btn {
@@ -676,7 +715,11 @@ input:checked+.slider:before {
   margin: 0;
   padding-right: 90px;
   max-height: 300px;
+  max-width: 100%;
+  overflow-x: auto;
   overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .json-details pre {
