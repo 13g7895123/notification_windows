@@ -16,6 +16,10 @@ on:
         required: true
         default: '1.0.0'
 
+# 明確給予寫入權限，解決 "Resource not accessible by integration" 錯誤
+permissions:
+  contents: write
+
 jobs:
   # 建立 Release
   create-release:
