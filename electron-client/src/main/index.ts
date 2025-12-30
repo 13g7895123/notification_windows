@@ -95,12 +95,6 @@ async function checkNotifications(): Promise<void> {
     try {
         const notifications = await apiClient.getUnnotifiedNotifications();
 
-        // 確保 notifications 是陣列
-        if (!Array.isArray(notifications)) {
-            logger.error(`API 返回的不是陣列: ${typeof notifications}`);
-            throw new Error('API 返回格式錯誤：預期為陣列');
-        }
-
         for (const notification of notifications) {
             // 顯示系統通知
             // 顯示自定義通知

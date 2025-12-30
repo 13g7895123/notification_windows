@@ -18,19 +18,32 @@ export interface ErrorDetails {
 
 export interface NotificationItem {
     id: string;
-    project: string;
+    type: string;
     title: string;
     message: string;
+    repo?: string;
+    branch?: string;
+    commit_sha?: string;
     status: string;
+    priority: string;
+    icon?: string | null;
+    action_url?: string | null;
+    metadata?: any;
+    delivered_at?: string | null;
+    read_at?: string | null;
     created_at: string;
-    notified_at: string;
+    updated_at: string;
+}
+
+export interface ApiResponseData {
+    notifications: NotificationItem[];
+    count: number;
 }
 
 export interface ApiResponse {
     success: boolean;
-    data: NotificationItem[];
-    count: number;
-    message: string;
+    data: ApiResponseData;
+    message?: string;
 }
 
 export class ApiClient {
@@ -43,7 +56,7 @@ export class ApiClient {
         this.baseURL = baseURL;
         this.apiKey = apiKey;
         this.logger = logger;
-        
+
         // 調試：顯示 API Key 長度（不顯示完整內容以保安全）
         if (apiKey && apiKey.trim()) {
             this.logger.debug(`API Key 已設定 (長度: ${apiKey.length})`);
@@ -119,7 +132,9 @@ export class ApiClient {
 
             const responseBody = await response.text();
             const data = JSON.parse(responseBody) as ApiResponse;
-            this.logger.debug(`API 回應: HTTP 200 (${duration}ms) | 數量: ${data.count} | 成功: ${data.success}`);
+            const notifications = data.data?.notifications || [];
+            const count = data.data?.count || 0;
+            this.logger.debug(`API 回應: HTTP 200 (${duration}ms) | 數量: ${count} | 成功: ${data.success}`);
 
             if (!data.success) {
                 this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -131,7 +146,8 @@ export class ApiClient {
                 throw new Error(`API 回應失敗: ${data.message}`);
             }
 
-            return data.data;
+            // 從 data.data.notifications 提取通知陣列
+            return Array.isArray(notifications) ? notifications : [];
         } catch (error) {
             const duration = Date.now() - startTime;
             if (error instanceof Error && error.name === 'AbortError') {
@@ -312,7 +328,7 @@ export class ApiClient {
                 this.logger.error(`響應內容: ${errorBody || '(空)'}`);
                 this.logger.error(`耗時: ${duration}ms`);
                 this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                
+
                 const errorMessage = errorData?.message || errorBody || `HTTP ${response.status}`;
                 throw new Error(`HTTP ${response.status}: ${errorMessage}`);
             }
