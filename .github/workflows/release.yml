@@ -16,7 +16,7 @@ on:
         required: true
         default: '1.0.0'
 
-# 明確給予寫入權限，解決 "Resource not accessible by integration" 錯誤
+# 明確給予寫入權限
 permissions:
   contents: write
 
@@ -43,13 +43,11 @@ jobs:
         working-directory: electron-client
         run: npm run test
 
-  # 建立 Release
-  create-release:
+  # 取得版本號
+  prepare:
     needs: test
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.create_release.outputs.id }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: 取得版本號
@@ -61,34 +59,9 @@ jobs:
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           fi
 
-      - name: 建立 GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          release_name: 通知監控程式 v${{ steps.get_version.outputs.version }}
-          body: |
-            ## 通知監控程式 v${{ steps.get_version.outputs.version }}
-            
-            ### 下載
-            | 平台 | 類型 | 檔案 |
-            |------|------|------|
-            | Windows | 安裝版 | `NotificationClient-Setup-${{ steps.get_version.outputs.version }}.exe` |
-            | Windows | 免安裝版 | `NotificationClient-Portable-${{ steps.get_version.outputs.version }}.exe` |
-            | macOS | 安裝檔 | `NotificationClient-${{ steps.get_version.outputs.version }}-mac.dmg` |
-            | Linux | AppImage | `NotificationClient-${{ steps.get_version.outputs.version }}-linux.AppImage` |
-            | Linux | DEB | `NotificationClient-${{ steps.get_version.outputs.version }}-linux-amd64.deb` |
-            
-            ### 更新內容
-            請查看 [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) 了解詳細更新內容。
-          draft: false
-          prerelease: false
-
   # Windows 打包
   build-windows:
-    needs: create-release
+    needs: prepare
     runs-on: windows-latest
     steps:
       - name: 檢出程式碼
@@ -104,7 +77,7 @@ jobs:
       - name: 更新版本號
         working-directory: electron-client
         run: |
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version --allow-same-version
+          npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --allow-same-version
 
       - name: 安裝依賴
         working-directory: electron-client
@@ -120,29 +93,17 @@ jobs:
         working-directory: electron-client/release
         run: dir
 
-      - name: 上傳 Windows 安裝檔 (NSIS)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 上傳 Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: electron-client/release/NotificationClient-Setup-${{ needs.create-release.outputs.version }}.exe
-          asset_name: NotificationClient-Setup-${{ needs.create-release.outputs.version }}.exe
-          asset_content_type: application/octet-stream
-
-      - name: 上傳 Windows 免安裝版 (Portable)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: electron-client/release/NotificationClient-Portable-${{ needs.create-release.outputs.version }}.exe
-          asset_name: NotificationClient-Portable-${{ needs.create-release.outputs.version }}.exe
-          asset_content_type: application/octet-stream
+          name: windows-builds
+          path: |
+            electron-client/release/*.exe
+          retention-days: 1
 
   # macOS 打包
   build-macos:
-    needs: create-release
+    needs: prepare
     runs-on: macos-latest
     steps:
       - name: 檢出程式碼
@@ -158,7 +119,7 @@ jobs:
       - name: 更新版本號
         working-directory: electron-client
         run: |
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version --allow-same-version
+          npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --allow-same-version
 
       - name: 安裝依賴
         working-directory: electron-client
@@ -174,19 +135,17 @@ jobs:
         working-directory: electron-client/release
         run: ls -la
 
-      - name: 上傳 macOS DMG
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 上傳 Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: electron-client/release/NotificationClient-${{ needs.create-release.outputs.version }}-mac.dmg
-          asset_name: NotificationClient-${{ needs.create-release.outputs.version }}-mac.dmg
-          asset_content_type: application/octet-stream
+          name: macos-builds
+          path: |
+            electron-client/release/*.dmg
+          retention-days: 1
 
   # Linux 打包
   build-linux:
-    needs: create-release
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - name: 檢出程式碼
@@ -202,7 +161,7 @@ jobs:
       - name: 更新版本號
         working-directory: electron-client
         run: |
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version --allow-same-version
+          npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --allow-same-version
 
       - name: 安裝依賴
         working-directory: electron-client
@@ -218,29 +177,80 @@ jobs:
         working-directory: electron-client/release
         run: ls -la
 
-      - name: 上傳 Linux AppImage
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 上傳 Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: electron-client/release/NotificationClient-${{ needs.create-release.outputs.version }}-linux.AppImage
-          asset_name: NotificationClient-${{ needs.create-release.outputs.version }}-linux.AppImage
-          asset_content_type: application/octet-stream
+          name: linux-builds
+          path: |
+            electron-client/release/*.AppImage
+            electron-client/release/*.deb
+          retention-days: 1
 
-      - name: 上傳 Linux DEB
-        uses: actions/upload-release-asset@v1
+  # 發布 Release
+  release:
+    needs: [prepare, build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下載 Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-builds
+          path: artifacts/windows
+
+      - name: 下載 macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-builds
+          path: artifacts/macos
+
+      - name: 下載 Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-builds
+          path: artifacts/linux
+
+      - name: 列出所有 Artifacts
+        run: |
+          echo "=== Windows ==="
+          ls -la artifacts/windows/
+          echo "=== macOS ==="
+          ls -la artifacts/macos/
+          echo "=== Linux ==="
+          ls -la artifacts/linux/
+
+      - name: 建立 GitHub Release 並上傳檔案
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: 通知監控程式 v${{ needs.prepare.outputs.version }}
+          body: |
+            ## 通知監控程式 v${{ needs.prepare.outputs.version }}
+            
+            ### 下載
+            | 平台 | 類型 | 檔案 |
+            |------|------|------|
+            | Windows | 安裝版 | `NotificationClient-Setup-${{ needs.prepare.outputs.version }}.exe` |
+            | Windows | 免安裝版 | `NotificationClient-Portable-${{ needs.prepare.outputs.version }}.exe` |
+            | macOS | 安裝檔 | `NotificationClient-${{ needs.prepare.outputs.version }}-mac.dmg` |
+            | Linux | AppImage | `NotificationClient-${{ needs.prepare.outputs.version }}-linux.AppImage` |
+            | Linux | DEB | `NotificationClient-${{ needs.prepare.outputs.version }}-linux-amd64.deb` |
+            
+            ### 更新內容
+            請查看 [CHANGELOG](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) 了解詳細更新內容。
+          files: |
+            artifacts/windows/*.exe
+            artifacts/macos/*.dmg
+            artifacts/linux/*.AppImage
+            artifacts/linux/*.deb
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: electron-client/release/NotificationClient-${{ needs.create-release.outputs.version }}-linux-amd64.deb
-          asset_name: NotificationClient-${{ needs.create-release.outputs.version }}-linux-amd64.deb
-          asset_content_type: application/octet-stream
 
   # 發送發布成功通知
   notify-release:
-    needs: [create-release, build-windows, build-macos, build-linux]
+    needs: [prepare, release]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -251,9 +261,9 @@ jobs:
             -H "X-API-Key: ${{ secrets.NOTIFY_API_KEY }}" \
             -d '{
               "title": "🚀 Release Success",
-              "message": "通知監控程式 v${{ needs.create-release.outputs.version }} 已成功發布至所有平台 (Windows, macOS, Linux)",
+              "message": "通知監控程式 v${{ needs.prepare.outputs.version }} 已成功發布至所有平台 (Windows, macOS, Linux)",
               "repo": "${{ github.repository }}",
               "branch": "${{ github.ref_name }}",
               "commit_sha": "${{ github.sha }}",
-              "action_url": "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}"
+              "action_url": "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.prepare.outputs.version }}"
             }'
