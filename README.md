@@ -6,6 +6,13 @@
 
 ```
 notification_app/
+├── scripts/                     # 啟動與建置腳本
+│   ├── start-electron.sh        # 啟動 Electron 版本
+│   ├── dev-electron.sh          # Electron 開發模式
+│   ├── build-electron.sh        # 編譯 Electron
+│   ├── package-electron.sh      # 打包 Electron
+│   └── start-go.sh              # 啟動 Go 版本
+│
 ├── shared/                      # 共用資源
 │   ├── api/                     # API 規格文件
 │   ├── config/                  # 設定檔 Schema
@@ -54,6 +61,30 @@ notification_app/
 | `project` | string | 要監控的專案名稱，留空則監控所有專案 |
 | `interval` | number | 查詢間隔時間（秒），預設 5 |
 | `debug` | boolean | 是否啟用 Debug 模式 |
+
+## 🚀 快速開始
+
+本專案提供便利的啟動腳本，位於 `scripts/` 目錄：
+
+```bash
+# 啟動 Electron 版本（推薦）
+./scripts/start-electron.sh
+
+# 啟動 Go 版本
+./scripts/start-go.sh
+```
+
+更多腳本說明請參考 [腳本使用說明](./scripts/README.md)
+
+### 可用腳本
+
+| 腳本 | 說明 |
+|------|------|
+| `start-electron.sh` | 編譯並啟動 Electron 版本 |
+| `dev-electron.sh` | 啟動 Electron 開發模式 |
+| `build-electron.sh` | 僅編譯 Electron（不啟動） |
+| `package-electron.sh` | 打包 Electron 安裝程式 |
+| `start-go.sh` | 編譯並啟動 Go 版本 |
 
 ## API 規格
 
