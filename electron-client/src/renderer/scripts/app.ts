@@ -294,7 +294,16 @@ function addHistoryItem(title: string, message: string, type: 'info' | 'success'
             <div class="detail-row"><strong>時間戳:</strong> ${new Date(details.timestamp).toLocaleString('zh-TW')}</div>
             <details class="json-details">
                 <summary>完整 JSON</summary>
-                <pre>${escapeHtml(detailsJson)}</pre>
+                <div class="json-content">
+                    <button class="copy-json-btn" title="複製 JSON">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        複製
+                    </button>
+                    <pre class="json-data">${escapeHtml(detailsJson)}</pre>
+                </div>
             </details>
         </div>
         `;
@@ -323,6 +332,45 @@ function addHistoryItem(title: string, message: string, type: 'info' | 'success'
                 expandIcon.textContent = isExpanded ? '▼' : '▲';
             }
         });
+
+        // 複製 JSON 按鈕事件
+        const copyBtn = item.querySelector('.copy-json-btn') as HTMLButtonElement;
+        if (copyBtn) {
+            const detailsJson = JSON.stringify(details, null, 2);
+            copyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const originalHtml = copyBtn.innerHTML;
+                
+                try {
+                    await navigator.clipboard.writeText(detailsJson);
+                    copyBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已複製
+                    `;
+                    copyBtn.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHtml;
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('複製失敗:', err);
+                    copyBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        失敗
+                    `;
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHtml;
+                    }, 2000);
+                }
+            });
+        }
     }
 
     // 插入到開頭

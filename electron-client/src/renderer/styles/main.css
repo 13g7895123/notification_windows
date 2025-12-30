@@ -629,6 +629,56 @@ input:checked+.slider:before {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.json-content {
+  position: relative;
+  margin-top: 8px;
+}
+
+.copy-json-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 4px;
+  color: var(--primary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.copy-json-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.copy-json-btn:active {
+  transform: translateY(0);
+}
+
+.copy-json-btn.copied {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--success);
+}
+
+.copy-json-btn svg {
+  flex-shrink: 0;
+}
+
+.json-data {
+  margin: 0;
+  padding-right: 90px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .json-details pre {
   margin-top: 8px;
   max-height: 300px;
