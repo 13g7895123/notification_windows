@@ -812,3 +812,15 @@ input:checked+.slider:before {
 #apiKey {
   padding-right: 40px;
 }
+
+.app-version {
+  position: absolute;
+  bottom: 10px;
+  right: 15px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 10;
+}

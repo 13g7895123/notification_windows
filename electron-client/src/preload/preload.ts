@@ -16,6 +16,7 @@ const electronAPI = {
     // API 測試
     testApi: () => ipcRenderer.invoke('test-api'),
     testNotification: () => ipcRenderer.invoke('test-notification'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 
 
     // 事件監聽

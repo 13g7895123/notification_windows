@@ -11,7 +11,7 @@ declare global {
             getMonitoringStatus: () => Promise<boolean>;
             testApi: () => Promise<{ success: boolean; message: string }>;
             testNotification: () => Promise<boolean>;
-
+            getAppVersion: () => Promise<string>;
             onNotificationReceived: (callback: (notification: NotificationItem) => void) => void;
             onMonitoringStatus: (callback: (status: boolean) => void) => void;
             onError: (callback: (error: string) => void) => void;
@@ -51,6 +51,7 @@ const elements = {
     btnCopyGuide: document.getElementById('btn-copy-guide') as HTMLButtonElement,
     statusBadge: document.getElementById('status-badge') as HTMLDivElement,
     historyList: document.getElementById('history-list') as HTMLDivElement,
+    appVersion: document.getElementById('app-version') as HTMLDivElement,
 };
 
 // 最大歷史記錄數量
@@ -64,6 +65,12 @@ async function init(): Promise<void> {
     elements.apiKey.value = config.apiKey;
     elements.interval.value = String(config.interval);
     elements.debug.checked = config.debug;
+
+    // 顯示版本號
+    const version = await window.electronAPI.getAppVersion();
+    if (elements.appVersion) {
+        elements.appVersion.textContent = `v${version}`;
+    }
 
     // 檢查監控狀態
     const isMonitoring = await window.electronAPI.getMonitoringStatus();

@@ -218,6 +218,10 @@ ipcMain.handle('test-notification', () => {
     return true;
 });
 
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+});
+
 // 應用程式生命週期
 app.whenReady().then(() => {
     logger.info('=== 應用程式啟動 ===');
