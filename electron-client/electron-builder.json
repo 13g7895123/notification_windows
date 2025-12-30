@@ -27,7 +27,7 @@
                 ]
             }
         ],
-        "icon": "assets/icon.ico",
+        "icon": "assets/icon.png",
         "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "portable": {
@@ -38,7 +38,7 @@
             "dmg",
             "zip"
         ],
-        "icon": "assets/icon.icns",
+        "icon": "assets/icon.png",
         "category": "public.app-category.utilities",
         "artifactName": "${productName}-${version}-mac.${ext}"
     },
@@ -58,8 +58,6 @@
         "oneClick": false,
         "perMachine": false,
         "allowToChangeInstallationDirectory": true,
-        "installerIcon": "assets/icon.ico",
-        "uninstallerIcon": "assets/icon.ico",
         "shortcutName": "通知監控程式"
     },
     "publish": {
